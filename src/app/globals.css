@@ -1,26 +1,376 @@
 @import "tailwindcss";
 
+/* ========================================
+   x1anyu的小屋 — Design Tokens
+   Warm cabin aesthetic with modern touches
+   ======================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Warm cream palette */
+  --color-cream: #fefcf8;
+  --color-cream-dark: #faf6ef;
+  --color-warm-gray: #f5f0e8;
+  --color-wood: #d4a574;
+  --color-wood-dark: #b8834a;
+  --color-amber: #d97706;
+  --color-amber-light: #fef3c7;
+  --color-ember: #ea580c;
+
+  /* Surfaces */
+  --color-bg: #fefcf8;
+  --color-bg-secondary: #faf6ef;
+  --color-bg-tertiary: #f5f0e8;
+  --color-surface: #ffffff;
+  --color-surface-hover: #fefcf8;
+
+  /* Text */
+  --color-text: #2d1f0f;
+  --color-text-secondary: #6b5e4f;
+  --color-text-tertiary: #a89880;
+  --color-text-muted: #c4b8a8;
+
+  /* Borders */
+  --color-border: #ebe3d6;
+  --color-border-light: #f2ece2;
+
+  /* Accent */
+  --color-accent: #d97706;
+  --color-accent-hover: #b45309;
+  --color-accent-soft: #fef3c7;
+  --color-accent-glow: rgba(217, 119, 6, 0.12);
+
+  /* Code */
+  --color-code-bg: #faf6ef;
+  --color-code-border: #ebe3d6;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(45, 31, 15, 0.04);
+  --shadow-md: 0 4px 12px rgba(45, 31, 15, 0.06), 0 1px 3px rgba(45, 31, 15, 0.04);
+  --shadow-lg: 0 12px 32px rgba(45, 31, 15, 0.08), 0 2px 8px rgba(45, 31, 15, 0.04);
+  --shadow-xl: 0 24px 48px rgba(45, 31, 15, 0.1);
+
+  /* Typography */
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: "Noto Serif SC", "Georgia", "Times New Roman", serif;
+  --font-mono: "Geist Mono", ui-monospace, "Cascadia Code", "Consolas", monospace;
+
+  /* Layout */
+  --max-width-content: 42rem;
+  --max-width-page: 76rem;
+  --header-height: 3.5rem;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
 }
 
+/* Dark mode — warm cabin at night */
+.dark {
+  --color-bg: #1a1410;
+  --color-bg-secondary: #201a14;
+  --color-bg-tertiary: #2a221a;
+  --color-surface: #231d16;
+  --color-surface-hover: #2a221a;
+
+  --color-text: #f0e6d8;
+  --color-text-secondary: #b8a590;
+  --color-text-tertiary: #7a6e5e;
+  --color-text-muted: #5c5040;
+
+  --color-border: #2a221a;
+  --color-border-light: #231d16;
+
+  --color-accent: #f59e0b;
+  --color-accent-hover: #fbbf24;
+  --color-accent-soft: #2a1f08;
+  --color-accent-glow: rgba(245, 158, 11, 0.15);
+
+  --color-code-bg: #1e1812;
+  --color-code-border: #2a221a;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.25);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.35);
+}
+
+/* Tailwind v4 integration */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--color-bg);
+  --color-bg-secondary: var(--color-bg-secondary);
+  --color-bg-tertiary: var(--color-bg-tertiary);
+  --color-surface: var(--color-surface);
+  --color-surface-hover: var(--color-surface-hover);
+  --color-text: var(--color-text);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-tertiary: var(--color-text-tertiary);
+  --color-text-muted: var(--color-text-muted);
+  --color-border: var(--color-border);
+  --color-border-light: var(--color-border-light);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-soft: var(--color-accent-soft);
+  --color-code-bg: var(--color-code-bg);
+  --color-code-border: var(--color-code-border);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ========================================
+   Base
+   ======================================== */
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.75;
+  transition: background-color var(--duration-slow) var(--ease-out),
+              color var(--duration-slow) var(--ease-out);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+::selection {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-bg-secondary); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-text-muted);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* ========================================
+   Noise Texture Overlay
+   ======================================== */
+
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+.dark .noise-overlay { opacity: 0.04; }
+
+/* ========================================
+   Typography — Prose
+   ======================================== */
+
+.prose {
+  max-width: none;
+  line-height: 1.85;
+  font-size: 1.0625rem;
+  color: var(--color-text);
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 2.25em;
+  margin-bottom: 0.6em;
+  color: var(--color-text);
+  scroll-margin-top: 5rem;
+  letter-spacing: -0.01em;
+}
+
+.prose h1 { font-size: 2rem; }
+.prose h2 {
+  font-size: 1.5rem;
+  margin-top: 2.5em;
+  padding-bottom: 0.35em;
+  border-bottom: 2px solid var(--color-accent-soft);
+}
+.prose h3 { font-size: 1.25rem; }
+
+.prose p { margin: 1.05em 0; }
+
+.prose a {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1.5px solid var(--color-accent-soft);
+  transition: border-color var(--duration-fast);
+}
+.prose a:hover { border-bottom-color: var(--color-accent); }
+
+.prose strong { font-weight: 600; color: var(--color-text); }
+
+.prose blockquote {
+  border-left: 3px solid var(--color-accent);
+  margin: 1.5em 0;
+  padding: 0.75em 1.25em;
+  background: var(--color-accent-soft);
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: var(--color-text-secondary);
+}
+.prose blockquote p { margin: 0.3em 0; }
+
+.prose ul, .prose ol {
+  padding-left: 1.5em;
+  margin: 1em 0;
+}
+.prose li { margin: 0.3em 0; }
+.prose li::marker { color: var(--color-text-muted); }
+
+.prose hr {
+  border: none;
+  height: 1px;
+  margin: 3em 0;
+  background: linear-gradient(to right, var(--color-border), transparent);
+}
+
+.prose img {
+  border-radius: 12px;
+  max-width: 100%;
+  margin: 2em auto;
+  display: block;
+  box-shadow: var(--shadow-md);
+}
+
+/* Tables */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.9375rem;
+}
+.prose th {
+  background: var(--color-bg-secondary);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.6em 0.9em;
+  border-bottom: 2px solid var(--color-border);
+}
+.prose td {
+  padding: 0.6em 0.9em;
+  border-bottom: 1px solid var(--color-border-light);
+}
+.prose tr:last-child td { border-bottom: none; }
+
+/* Inline code */
+.prose code:not(pre code) {
+  background: var(--color-accent-soft);
+  border-radius: 4px;
+  padding: 0.15em 0.4em;
+  font-size: 0.85em;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--color-accent-hover);
+}
+
+/* Code blocks */
+.prose pre {
+  background: var(--color-code-bg) !important;
+  border: 1px solid var(--color-code-border);
+  border-radius: 12px;
+  padding: 1.25em;
+  margin: 1.5em 0;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  box-shadow: var(--shadow-sm);
+}
+
+.prose pre code {
+  font-family: var(--font-mono);
+  font-size: inherit;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* Code block language label */
+.prose pre[data-language] { padding-top: 2.6em; }
+.prose pre[data-language]::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  padding: 0.3em 1.25em;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--color-code-border);
+}
+
+/* Heading anchor links */
+.prose .anchor-link {
+  opacity: 0;
+  margin-left: 0.35em;
+  font-size: 0.85em;
+  border-bottom: none !important;
+  text-decoration: none !important;
+  transition: opacity var(--duration-fast);
+}
+.prose h2:hover .anchor-link,
+.prose h3:hover .anchor-link { opacity: 0.4; }
+.prose h2:hover .anchor-link:hover,
+.prose h3:hover .anchor-link:hover { opacity: 1; }
+
+/* ========================================
+   Animations
+   ======================================== */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s var(--ease-out) forwards;
+}
+.animate-fade-in {
+  animation: fadeIn 0.5s var(--ease-out) forwards;
+}
+
+/* Stagger children */
+.stagger > * {
+  opacity: 0;
+  animation: fadeInUp 0.55s var(--ease-out) forwards;
+}
+.stagger > *:nth-child(1)  { animation-delay: 0.04s; }
+.stagger > *:nth-child(2)  { animation-delay: 0.08s; }
+.stagger > *:nth-child(3)  { animation-delay: 0.12s; }
+.stagger > *:nth-child(4)  { animation-delay: 0.16s; }
+.stagger > *:nth-child(5)  { animation-delay: 0.20s; }
+.stagger > *:nth-child(6)  { animation-delay: 0.24s; }
+.stagger > *:nth-child(7)  { animation-delay: 0.28s; }
+.stagger > *:nth-child(8)  { animation-delay: 0.32s; }
+.stagger > *:nth-child(9)  { animation-delay: 0.36s; }
+.stagger > *:nth-child(10) { animation-delay: 0.40s; }
