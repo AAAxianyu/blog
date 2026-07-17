@@ -2,7 +2,7 @@ import { getAllPosts } from '@/lib/posts';
 
 export async function GET() {
   const posts = getAllPosts();
-  const siteUrl = process.env.SITE_URL || 'https://yourdomain.com';
+  const siteUrl = process.env.SITE_URL || 'https://x1anyu.top';
 
   const feedItems = posts
     .map(

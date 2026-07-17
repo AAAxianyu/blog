@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     template: "%s — x1anyu的小屋",
   },
   description: "x1anyu的个人博客。记录技术、设计、生活的思考和感悟。",
-  metadataBase: new URL("https://yourdomain.com"),
+  metadataBase: new URL("https://x1anyu.top"),
   openGraph: {
     title: "x1anyu的小屋",
     description: "记录技术、设计、生活的思考和感悟。",

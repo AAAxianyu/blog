@@ -1,13 +1,14 @@
 #!/bin/bash
 # ============================================
-# ~/blog Deployment Script
+# x1anyu的小屋 Deployment Script
+# Server: 115.190.136.177
+# Domain: x1anyu.top
 # ============================================
 set -e
 
 echo "🚀 Starting deployment..."
 
-# Configuration (modify these)
-APP_DIR="/home/youruser/blog"
+APP_DIR="/root/blog"
 APP_NAME="blog"
 
 cd "$APP_DIR"
@@ -24,6 +25,9 @@ npm ci --production=false
 echo "🔨 Building application..."
 npm run build
 
+# Create logs directory if needed
+mkdir -p logs
+
 # Restart the application
 echo "🔄 Restarting application..."
 pm2 reload "$APP_NAME" || pm2 start ecosystem.config.js
@@ -31,9 +35,4 @@ pm2 reload "$APP_NAME" || pm2 start ecosystem.config.js
 # Save PM2 process list
 pm2 save
 
-echo "✅ Deployment complete!"
-echo ""
-echo "Next steps:"
-echo "  - Check status: pm2 status"
-echo "  - View logs: pm2 logs $APP_NAME"
-echo "  - Test: curl http://localhost:3000"
+echo "✅ Deployment complete! Visit https://x1anyu.top"

@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { getAllPosts, getAllCategories, getAllTags } from '@/lib/posts';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const siteUrl = process.env.SITE_URL || 'https://yourdomain.com';
+  const siteUrl = process.env.SITE_URL || 'https://x1anyu.top';
   const posts = getAllPosts();
   const categories = getAllCategories();
   const tags = getAllTags();
