@@ -43,6 +43,9 @@ yarn-error.log*
 .vscode/
 .idea/
 
+# deployment scripts (contains credentials)
+scripts/
+
 # vercel
 .vercel
 
