@@ -9,79 +9,73 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
       - name: Deploy to server
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
-          script_timeout: 300s
+          script_timeout: 600s
           script: |
             set -e
-            echo "=== Starting deployment ==="
+            echo "===== Deploy start: $(date) ====="
 
-            # Upgrade Node.js if needed
-            NODE_VER=$(node --version 2>/dev/null | cut -d'v' -f2 | cut -d'.' -f1 || echo 0)
-            echo "Current Node.js version: $NODE_VER"
-            if [ "$NODE_VER" -lt 20 ]; then
-              echo "Upgrading Node.js to v22..."
+            # Ensure swap exists (build needs ~1GB RAM)
+            if [ ! -f /swapfile ]; then
+              echo "Creating 1GB swap..."
+              dd if=/dev/zero of=/swapfile bs=1M count=1024 2>/dev/null
+              chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+              echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+            fi
+
+            # Upgrade Node if < v20
+            NV=$(node -v 2>/dev/null | cut -d. -f1 | tr -d 'v')
+            if [ "${NV:-0}" -lt 20 ]; then
+              echo "Node v$NV -> upgrading to v22..."
+              apt-get update -qq
+              apt-get install -y ca-certificates curl gnupg
               curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
               apt-get install -y nodejs
               hash -r
-              echo "Node.js upgraded to: $(node --version)"
+            fi
+            echo "Node: $(node -v) | NPM: $(npm -v)"
+
+            # Clone or update
+            if [ -d /root/blog/.git ]; then
+              cd /root/blog
+              git fetch https://github.com/AAAxianyu/blog.git main
+              git reset --hard FETCH_HEAD
+            else
+              rm -rf /root/blog
+              git clone https://github.com/AAAxianyu/blog.git /root/blog
+              cd /root/blog
             fi
 
-            # Pull latest code
-            echo "=== Pulling latest code ==="
-            cd /root/blog
-            git pull origin main
+            # Build
+            npm install
+            NODE_OPTIONS="--max-old-space-size=512" npm run build
 
-            # Install & build
-            echo "=== Installing dependencies ==="
-            npm ci --production=false
-            echo "=== Building ==="
-            npm run build
-
-            # Create logs dir
+            # PM2
             mkdir -p logs
-
-            # Restart PM2
-            echo "=== Starting PM2 ==="
             pm2 delete blog 2>/dev/null || true
             pm2 start ecosystem.config.js
             pm2 save
-            pm2 startup systemd -u root --hp /root 2>/dev/null || true
 
-            # Ensure Nginx
-            echo "=== Configuring Nginx ==="
-            if ! command -v nginx >/dev/null 2>&1; then
-              apt-get update -qq && apt-get install -y nginx
-            fi
-            cp /root/blog/nginx.conf /etc/nginx/sites-available/blog
+            # Nginx
+            cp nginx.conf /etc/nginx/sites-available/blog
             ln -sf /etc/nginx/sites-available/blog /etc/nginx/sites-enabled/
             rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
-            nginx -t
+            if ! nginx -t 2>/dev/null; then
+              apt-get install -y nginx
+              nginx -t
+            fi
             systemctl reload nginx 2>/dev/null || nginx -s reload 2>/dev/null || systemctl start nginx
 
             # Verify
-            echo "=== Verifying ==="
-            sleep 2
-            curl -s -o /dev/null -w "localhost:3000 HTTP %{http_code}\n" http://localhost:3000 || true
-            curl -s -o /dev/null -w "localhost:80 HTTPS %{http_code}\n" http://localhost || true
+            sleep 3
+            echo "--- localhost:3000 ---"
+            curl -sI http://localhost:3000 2>&1 | head -3 || echo "DOWN"
+            echo "--- localhost:80 ---"
+            curl -sI http://localhost 2>&1 | head -3 || echo "DOWN"
             pm2 list
-
-            echo "✅ Deploy complete! https://x1anyu.top"
+            echo "===== Deploy done: $(date) ====="
