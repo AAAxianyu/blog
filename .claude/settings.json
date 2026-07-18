@@ -1,0 +1,9 @@
+{
+    "model": "opus[1m]",
+    "permissions": {
+      "allow": [
+        {"tool": "Bash", "description": "SSH server deployment"},
+        {"tool": "PowerShell", "description": "Server deployment via ssh2"}
+      ]
+    }
+  }
