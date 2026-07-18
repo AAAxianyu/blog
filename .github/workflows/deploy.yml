@@ -22,23 +22,10 @@ jobs:
           npm run build
 
       - name: Package
-        run: |
-          tar czf deploy.tar.gz \
-            .next \
-            public \
-            content \
-            src \
-            package.json \
-            package-lock.json \
-            ecosystem.config.js \
-            nginx.conf \
-            next.config.ts \
-            tsconfig.json \
-            postcss.config.mjs \
-            eslint.config.mjs
+        run: tar czf deploy.tar.gz .next public content src package.json package-lock.json ecosystem.config.js nginx.conf next.config.ts tsconfig.json postcss.config.mjs eslint.config.mjs
 
-      - name: Deploy to server
-        uses: appleboy/scp-action@v0
+      - name: Upload via SCP
+        uses: appleboy/scp-action@v0.1.9
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
@@ -46,49 +33,48 @@ jobs:
           source: deploy.tar.gz
           target: /root/blog-tmp
 
-      - name: Restart on server
+      - name: Deploy and restart
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
+          command_timeout: 600s
           script: |
             set -e
-            echo "=== Deploying ==="
+            echo "=== Upgrade Node if needed ==="
 
-            # Node upgrade if needed
-            [ "$(node -v | cut -d. -f1 | tr -d v)" -lt 20 ] && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -y nodejs
+            if [ "$(node -v | cut -d. -f1 | tr -d v)" -lt 20 ]; then
+              curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+              apt-get install -y nodejs
+            fi
 
-            # Extract to blog dir
-            rm -rf /root/blog-tmp
-            mkdir -p /root/blog-tmp
-            tar xzf /root/blog-tmp/deploy.tar.gz -C /root/blog-tmp/ || tar xzf /root/blog-tmp/deploy.tar.gz -C /root/blog-tmp/
+            echo "=== Extract ==="
+            cd /root/blog-tmp && tar xzf deploy.tar.gz
 
-            # Replace old build
-            rm -rf /root/blog/.next /root/blog/public /root/blog/src /root/blog/content
-            cp -r /root/blog-tmp/.next /root/blog/
-            cp -r /root/blog-tmp/public /root/blog/ 2>/dev/null || true
-            cp -r /root/blog-tmp/src /root/blog/ 2>/dev/null || true
-            cp -r /root/blog-tmp/content /root/blog/ 2>/dev/null || true
-            cp /root/blog-tmp/package.json /root/blog/ 2>/dev/null || true
-            cp /root/blog-tmp/ecosystem.config.js /root/blog/ 2>/dev/null || true
-            cp /root/blog-tmp/nginx.conf /root/blog/ 2>/dev/null || true
+            echo "=== Sync to blog ==="
+            rm -rf /root/blog/.next /root/blog/content /root/blog/src /root/blog/public
+            cp -r .next /root/blog/
+            cp -r content /root/blog/ 2>/dev/null || true
+            cp -r src /root/blog/ 2>/dev/null || true
+            cp -r public /root/blog/ 2>/dev/null || true
+            cp package.json package-lock.json ecosystem.config.js nginx.conf /root/blog/ 2>/dev/null || true
 
-            # Install deps
+            echo "=== Install deps ==="
             cd /root/blog && npm install --production 2>&1 | tail -3
 
-            # Restart
+            echo "=== PM2 ==="
             mkdir -p logs
             pm2 restart blog 2>/dev/null || pm2 start ecosystem.config.js
             pm2 save
 
-            # Nginx
+            echo "=== Nginx ==="
             cp /root/blog/nginx.conf /etc/nginx/sites-available/blog
             ln -sf /etc/nginx/sites-available/blog /etc/nginx/sites-enabled/
-            rm -f /etc/nginx/sites-enabled/default
-            nginx -t && nginx -s reload 2>/dev/null || (nginx && echo nginx-started)
+            rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+            nginx -t
+            nginx -s reload 2>/dev/null || (nginx && echo nginx-started)
 
-            # Clean
             rm -rf /root/blog-tmp
 
             sleep 2
