@@ -53,6 +53,7 @@ fi
 id -u blog >/dev/null 2>&1 || useradd --system --home-dir "$app_root" --shell /usr/sbin/nologin blog
 install -d -o root -g root -m 755 "${app_root}/releases"
 install -d -o blog -g blog -m 750 "${data_root}/posts" "${data_root}/uploads" "${data_root}/trash"
+install -d -o root -g root -m 755 /var/www/html/.well-known/acme-challenge
 
 rm -rf "$release_dir"
 install -d -o root -g root -m 755 "$release_dir"
@@ -85,6 +86,11 @@ cp "${release_dir}/ops/x1anyu-blog.service" /etc/systemd/system/x1anyu-blog.serv
 cp "${release_dir}/ops/nginx.conf" /etc/nginx/sites-available/blog
 ln -sfn /etc/nginx/sites-available/blog /etc/nginx/sites-enabled/blog
 rm -f /etc/nginx/sites-enabled/default
+
+renewal_config="/etc/letsencrypt/renewal/x1anyu.top.conf"
+if [ -f "$renewal_config" ] && grep -q '^webroot_path = ' "$renewal_config"; then
+  sed -i 's|^webroot_path = .*|webroot_path = /var/www/html,|' "$renewal_config"
+fi
 
 ln -sfn "$release_dir" "${app_root}/current.next"
 mv -Tf "${app_root}/current.next" "${app_root}/current"
