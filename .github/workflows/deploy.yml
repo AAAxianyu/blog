@@ -15,7 +15,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -44,6 +44,8 @@ jobs:
           cp ops/x1anyu-blog.service release/ops/
           cp nginx.conf release/ops/
           tar -C release -czf "blog-${GITHUB_SHA}.tgz" .
+          split --numeric-suffixes=0 --suffix-length=2 --number=l/4 \
+            "blog-${GITHUB_SHA}.tgz" "blog-${GITHUB_SHA}.part-"
 
       - name: Configure SSH
         env:
@@ -61,8 +63,14 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
         run: |
-          sshpass -e scp "blog-${GITHUB_SHA}.tgz" \
-            "$SSH_USERNAME@$SSH_HOST:/tmp/blog-${GITHUB_SHA}.tgz"
+          pids=()
+          for part in "blog-${GITHUB_SHA}".part-*; do
+            sshpass -e scp "$part" "$SSH_USERNAME@$SSH_HOST:/tmp/$part" &
+            pids+=("$!")
+          done
+          for pid in "${pids[@]}"; do
+            wait "$pid"
+          done
 
       - name: Activate release with rollback
         env:
@@ -71,7 +79,9 @@ jobs:
           SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
         run: |
           sshpass -e ssh "$SSH_USERNAME@$SSH_HOST" \
-            "bash -s -- '${GITHUB_SHA}'" < ops/activate-release.sh
+            "cat /tmp/blog-${GITHUB_SHA}.part-* > /tmp/blog-${GITHUB_SHA}.tgz && \
+             rm -f /tmp/blog-${GITHUB_SHA}.part-* && \
+             bash -s -- '${GITHUB_SHA}'" < ops/activate-release.sh
 
       - name: Verify public endpoint
         env:

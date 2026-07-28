@@ -12,6 +12,8 @@ app_root="/srv/x1anyu-blog"
 release_dir="${app_root}/releases/${release_id}"
 data_root="/var/lib/x1anyu-blog"
 previous_target=""
+legacy_pm2_active=false
+legacy_pm2_removed=false
 
 set_deployment_version() {
   local version="$1"
@@ -32,9 +34,21 @@ cleanup_failed_release() {
     ln -sfn "$previous_target" "${app_root}/current.rollback"
     mv -Tf "${app_root}/current.rollback" "${app_root}/current"
     systemctl restart x1anyu-blog || true
+  elif [ "$legacy_pm2_active" = true ] && [ "$legacy_pm2_removed" = true ] \
+    && [ -f /root/blog/ecosystem.config.js ]; then
+    systemctl stop x1anyu-blog || true
+    (
+      cd /root/blog
+      pm2 start ecosystem.config.js
+      pm2 save --force
+    ) || true
   fi
 }
 trap cleanup_failed_release ERR
+
+if command -v pm2 >/dev/null 2>&1 && pm2 describe blog >/dev/null 2>&1; then
+  legacy_pm2_active=true
+fi
 
 id -u blog >/dev/null 2>&1 || useradd --system --home-dir "$app_root" --shell /usr/sbin/nologin blog
 install -d -o root -g root -m 755 "${app_root}/releases"
@@ -81,7 +95,9 @@ systemctl enable x1anyu-blog
 # The legacy deployment used PM2 on the same port. Remove it before systemd
 # takes ownership during the first migration.
 if command -v pm2 >/dev/null 2>&1; then
-  pm2 delete blog >/dev/null 2>&1 || true
+  if pm2 delete blog >/dev/null 2>&1; then
+    legacy_pm2_removed=true
+  fi
   pm2 save --force >/dev/null 2>&1 || true
 fi
 
