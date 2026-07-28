@@ -5,9 +5,17 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -16,67 +24,59 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Build
+      - name: Install, test and build
+        env:
+          DEPLOYMENT_VERSION: ${{ github.sha }}
         run: |
           npm ci
+          npm run lint
+          npm run test
           npm run build
 
-      - name: Package
-        run: tar czf deploy.tar.gz .next public content src package.json package-lock.json ecosystem.config.js nginx.conf next.config.ts tsconfig.json postcss.config.mjs eslint.config.mjs
+      - name: Create release archive
+        run: |
+          set -euo pipefail
+          mkdir -p release/.next release/seed-posts release/ops
+          cp -a .next/standalone/. release/
+          cp -a .next/static release/.next/static
+          cp -a public release/public
+          cp -a content/posts/. release/seed-posts/
+          cp ops/x1anyu-blog.service release/ops/
+          cp nginx.conf release/ops/
+          tar -C release -czf "blog-${GITHUB_SHA}.tgz" .
 
-      - name: Upload via SCP
-        uses: appleboy/scp-action@v0.1.9
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          source: deploy.tar.gz
-          target: /root/blog-tmp
+      - name: Configure SSH
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq sshpass
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
-      - name: Deploy and restart
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          command_timeout: 600s
-          script: |
-            set -e
-            echo "=== Upgrade Node if needed ==="
+      - name: Upload release
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+        run: |
+          sshpass -e scp "blog-${GITHUB_SHA}.tgz" \
+            "$SSH_USERNAME@$SSH_HOST:/tmp/blog-${GITHUB_SHA}.tgz"
 
-            if [ "$(node -v | cut -d. -f1 | tr -d v)" -lt 20 ]; then
-              curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-              apt-get install -y nodejs
-            fi
+      - name: Activate release with rollback
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+        run: |
+          sshpass -e ssh "$SSH_USERNAME@$SSH_HOST" \
+            "bash -s -- '${GITHUB_SHA}'" < ops/activate-release.sh
 
-            echo "=== Extract ==="
-            cd /root/blog-tmp && tar xzf deploy.tar.gz
-
-            echo "=== Sync to blog ==="
-            rm -rf /root/blog/.next /root/blog/content /root/blog/src /root/blog/public
-            cp -r .next /root/blog/
-            cp -r content /root/blog/ 2>/dev/null || true
-            cp -r src /root/blog/ 2>/dev/null || true
-            cp -r public /root/blog/ 2>/dev/null || true
-            cp package.json package-lock.json ecosystem.config.js nginx.conf /root/blog/ 2>/dev/null || true
-
-            echo "=== Install deps ==="
-            cd /root/blog && npm install --production 2>&1 | tail -3
-
-            echo "=== PM2 ==="
-            mkdir -p logs
-            pm2 restart blog 2>/dev/null || pm2 start ecosystem.config.js
-            pm2 save
-
-            echo "=== Nginx ==="
-            cp /root/blog/nginx.conf /etc/nginx/sites-available/blog
-            ln -sf /etc/nginx/sites-available/blog /etc/nginx/sites-enabled/
-            rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
-            nginx -t
-            nginx -s reload 2>/dev/null || (nginx && echo nginx-started)
-
-            rm -rf /root/blog-tmp
-
-            sleep 2
-            curl -sI http://localhost:3000 | head -3
-            echo "=== Done ==="
+      - name: Verify public endpoint
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 5 --retry-delay 2 \
+            --resolve "x1anyu.top:443:${SSH_HOST}" \
+            "https://x1anyu.top/api/health"

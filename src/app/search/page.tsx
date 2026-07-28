@@ -1,60 +1,47 @@
+import type { Metadata } from 'next';
+import { Search } from 'lucide-react';
 import { searchPosts } from '@/lib/posts';
-import PostCard from '@/components/features/PostCard';
+import PostGrid from '@/components/features/PostGrid';
 import SearchBar from '@/components/features/SearchBar';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: '搜索',
-  description: '搜索文章',
+  description: '全文搜索博客文章。',
 };
 
-export default async function SearchPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
+export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
-  const query = q || '';
+  const query = q?.trim() || '';
   const results = query ? searchPosts(query) : [];
 
   return (
     <div className="animate-fade-in">
-      <div className="border-b border-border">
-        <div className="mx-auto max-w-[var(--max-width-content)] px-4 sm:px-6 py-16">
-          <h1 className="text-3xl sm:text-4xl font-bold text-text tracking-tight mb-6">搜索</h1>
-          <div className="max-w-md">
-            <SearchBar placeholder="输入关键词搜索..." />
-          </div>
+      <header className="border-b border-border bg-surface">
+        <div className="mx-auto max-w-[var(--max-width-content)] px-5 py-14 sm:px-6 sm:py-18">
+          <p className="section-kicker mb-2">Full-text search</p>
+          <h1 className="font-serif text-3xl font-bold text-text sm:text-4xl">搜索文章</h1>
+          <div className="mt-7"><SearchBar placeholder="标题、正文、标签或分类" defaultValue={query} /></div>
         </div>
-      </div>
-
-      <div className="mx-auto max-w-[var(--max-width-page)] px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      </header>
+      <section className="mx-auto max-w-[var(--max-width-page)] px-5 py-12 sm:px-6 sm:py-16 lg:px-8">
         {query ? (
           <>
-            <p className="text-text-secondary mb-8">
-              找到 {results.length} 篇关于 &quot;{query}&quot; 的文章
+            <p className="mb-8 text-sm text-text-secondary">
+              “{query}” 找到 {results.length} 篇文章
             </p>
-            {results.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
-                {results.map((post) => (
-                  <div key={post.slug}>
-                    <PostCard post={post} />
-                  </div>
-                ))}
-              </div>
+            {results.length ? (
+              <PostGrid posts={results} />
             ) : (
-              <div className="text-center py-16">
-                <p className="text-text-tertiary text-lg">没有找到相关文章，试试其他关键词吧。</p>
+              <div className="border-y border-border py-16 text-center text-text-muted">
+                <Search className="mx-auto mb-3" size={24} />
+                换一个关键词再试试。
               </div>
             )}
           </>
         ) : (
-          <div className="text-center py-16">
-            <p className="text-text-tertiary text-lg">
-              在上方输入关键词，搜索感兴趣的文章。
-            </p>
-          </div>
+          <p className="border-y border-border py-16 text-center text-text-muted">输入关键词开始搜索。</p>
         )}
-      </div>
+      </section>
     </div>
   );
 }

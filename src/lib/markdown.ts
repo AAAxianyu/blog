@@ -6,26 +6,32 @@ import rehypeStringify from 'rehype-stringify';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import rehypePrettyCode from 'rehype-pretty-code';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import type { Root } from 'hast';
 
 interface RehypePlugin {
   (options?: unknown): (tree: Root) => void;
 }
 
-const rehypePrettyCodeOptions = {
-  theme: {
-    light: 'github-light',
-    dark: 'github-dark',
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    a: [...(defaultSchema.attributes?.a || []), 'ariaLabel', 'className'],
+    code: [...(defaultSchema.attributes?.code || []), 'className', 'dataLanguage', 'dataTheme'],
+    div: [...(defaultSchema.attributes?.div || []), 'className', 'dataRehypePrettyCodeFigure'],
+    figure: ['className', 'dataRehypePrettyCodeFigure'],
+    pre: [...(defaultSchema.attributes?.pre || []), 'className', 'dataLanguage', 'dataTheme'],
+    span: [...(defaultSchema.attributes?.span || []), 'ariaHidden', 'className', 'style', 'dataLine'],
   },
-  keepBackground: true,
-  defaultLang: 'plaintext',
+  tagNames: [...(defaultSchema.tagNames || []), 'figure'],
 };
 
 const autolinkOptions = {
   behavior: 'append' as const,
   properties: {
-    className: 'anchor-link',
-    ariaLabel: 'Link to this heading',
+    className: ['anchor-link'],
+    ariaLabel: '复制此小节链接',
   },
   content: {
     type: 'element',
@@ -35,38 +41,23 @@ const autolinkOptions = {
   },
 };
 
-/**
- * Process markdown content and return HTML string.
- */
 export async function markdownToHtml(markdown: string): Promise<string> {
   const result = await unified()
     .use(remarkParse)
     .use(remarkGfm)
-    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(remarkRehype)
+    .use(rehypeSanitize, sanitizeSchema)
     .use(rehypeSlug)
     .use(rehypeAutolinkHeadings as RehypePlugin, autolinkOptions)
-    .use(rehypePrettyCode as RehypePlugin, rehypePrettyCodeOptions)
-    .use(rehypeStringify, { allowDangerousHtml: true })
+    .use(rehypePrettyCode as RehypePlugin, {
+      theme: { light: 'github-light', dark: 'github-dark' },
+      keepBackground: false,
+      defaultLang: 'plaintext',
+    })
+    .use(rehypeStringify)
     .process(markdown);
 
   return result.toString();
 }
 
-/**
- * Extract plain text from markdown (strip all formatting).
- */
-export function stripMarkdown(markdown: string): string {
-  return markdown
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/\*\*(.+?)\*\*/g, '$1')
-    .replace(/\*(.+?)\*/g, '$1')
-    .replace(/`{1,3}[^`]*`{1,3}/g, '')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
-    .replace(/^[-*+]\s+/gm, '')
-    .replace(/^\d+\.\s+/gm, '')
-    .replace(/^>\s+/gm, '')
-    .replace(/<[^>]+>/g, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
+export { stripMarkdownText as stripMarkdown } from './utils-internal';

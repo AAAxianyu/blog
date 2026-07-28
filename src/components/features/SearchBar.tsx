@@ -1,140 +1,122 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { searchPosts, PostSummary } from '@/lib/posts';
+import { Search, X } from 'lucide-react';
+import type { PostSummary } from '@/lib/posts';
 import { formatDate } from '@/lib/utils';
 
-export default function SearchBar({ placeholder = '搜索文章...' }: { placeholder?: string }) {
+export default function SearchBar({
+  placeholder = '搜索文章...',
+  defaultValue = '',
+}: {
+  placeholder?: string;
+  defaultValue?: string;
+}) {
   const router = useRouter();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(defaultValue);
   const [results, setResults] = useState<PostSummary[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Client-side search
-  const handleSearch = useCallback(
-    (value: string) => {
-      setQuery(value);
-      if (value.trim().length > 0) {
-        // Fetch search results from a lightweight JSON endpoint
-        fetch(`/api/search?q=${encodeURIComponent(value)}`)
-          .then((res) => res.json())
-          .then((data) => {
-            setResults(data.posts || []);
-            setIsOpen(true);
-          })
-          .catch(() => {
-            // Fallback: we could do client-side filtering if we had all posts loaded
-            setResults([]);
-          });
-      } else {
-        setResults([]);
-        setIsOpen(false);
-      }
-    },
-    []
-  );
-
-  // Close on outside click
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
+    const normalized = query.trim();
+    if (!normalized) return;
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(normalized)}`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error('Search failed');
+        const data = await response.json() as { posts?: PostSummary[] };
+        setResults(data.posts || []);
+        setOpen(true);
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) setResults([]);
+      } finally {
+        setLoading(false);
       }
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
     };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+  }, [query]);
+
+  useEffect(() => {
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-      setIsOpen(false);
-    }
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const normalized = query.trim();
+    if (!normalized) return;
+    setOpen(false);
+    router.push(`/search?q=${encodeURIComponent(normalized)}`);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setIsOpen(false);
-    }
+  const clear = () => {
+    setQuery('');
+    setResults([]);
+    setOpen(false);
   };
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <form onSubmit={handleSubmit} className="relative">
-        <svg
-          className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+      <form onSubmit={submit} role="search" className="relative">
+        <Search size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary" />
         <input
-          type="text"
+          type="search"
           value={query}
-          onChange={(e) => handleSearch(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={() => query && results.length > 0 && setIsOpen(true)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            if (!event.target.value.trim()) clear();
+          }}
+          onFocus={() => query.trim() && setOpen(true)}
+          onKeyDown={(event) => { if (event.key === 'Escape') setOpen(false); }}
           placeholder={placeholder}
-          className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl
-            bg-bg-secondary border border-border
-            text-text placeholder:text-text-tertiary
-            focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
-            transition-all duration-200"
+          aria-label={placeholder}
+          className="h-11 w-full rounded-[6px] border border-border bg-surface pl-10 pr-10 text-sm text-text outline-none placeholder:text-text-tertiary focus:border-secondary focus:ring-2 focus:ring-secondary/15"
         />
         {query && (
-          <button
-            type="button"
-            onClick={() => { setQuery(''); setResults([]); setIsOpen(false); }}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text transition-colors cursor-pointer"
-            aria-label="Clear search"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+          <button type="button" onClick={clear} aria-label="清空搜索" title="清空" className="absolute right-2.5 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-[4px] text-text-tertiary hover:bg-bg-secondary hover:text-text">
+            <X size={15} />
           </button>
         )}
       </form>
 
-      {/* Dropdown Results */}
-      {isOpen && (
-        <div className="absolute top-full mt-2 w-full bg-card-bg border border-border rounded-xl shadow-lg overflow-hidden z-40">
-          {results.length > 0 ? (
+      {open && (
+        <div className="absolute top-full z-40 mt-2 w-full overflow-hidden rounded-[6px] border border-border bg-surface shadow-[var(--shadow-lg)]">
+          {loading ? (
+            <p className="px-4 py-5 text-center text-sm text-text-muted">搜索中…</p>
+          ) : results.length ? (
             <ul className="max-h-80 overflow-y-auto py-1">
-              {results.slice(0, 8).map((post) => (
+              {results.slice(0, 6).map((post) => (
                 <li key={post.slug}>
-                  <a
-                    href={`/posts/${post.slug}`}
-                    className="block px-4 py-2.5 hover:bg-bg-secondary transition-colors"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <div className="text-sm font-medium text-text truncate">{post.title}</div>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-text-tertiary">
-                      <span>{formatDate(post.date)}</span>
-                      <span>&middot;</span>
-                      <span>{post.category}</span>
-                    </div>
-                  </a>
+                  <Link href={`/posts/${post.slug}`} onClick={() => setOpen(false)} className="block px-4 py-2.5 hover:bg-bg-secondary">
+                    <span className="block truncate text-sm font-medium text-text">{post.title}</span>
+                    <span className="mt-0.5 block text-xs text-text-muted">{formatDate(post.date)} · {post.category}</span>
+                  </Link>
                 </li>
               ))}
-              <li>
-                <a
-                  href={`/search?q=${encodeURIComponent(query)}`}
-                  className="block px-4 py-2.5 text-sm text-accent hover:bg-bg-secondary transition-colors font-medium"
-                  onClick={() => setIsOpen(false)}
-                >
-                  查看全部结果 &rarr;
-                </a>
+              <li className="border-t border-border">
+                <Link href={`/search?q=${encodeURIComponent(query.trim())}`} onClick={() => setOpen(false)} className="block px-4 py-2.5 text-sm font-medium text-secondary hover:bg-bg-secondary">
+                  查看全部结果
+                </Link>
               </li>
             </ul>
           ) : (
-            <div className="px-4 py-6 text-center text-sm text-text-tertiary">
-              未找到关于 &quot;{query}&quot; 的文章
-            </div>
+            <p className="px-4 py-5 text-center text-sm text-text-muted">没有找到相关文章</p>
           )}
         </div>
       )}

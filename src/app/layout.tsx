@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Serif_SC } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import Header from "@/components/layout/Header";
@@ -38,6 +38,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "zh_CN",
     siteName: "x1anyu的小屋",
+    images: [{ url: "/images/writing-desk.jpg", width: 1800, height: 1200 }],
   },
   twitter: {
     card: "summary_large_image",
@@ -45,6 +46,15 @@ export const metadata: Metadata = {
     description: "记录技术、设计、生活的思考和感悟。",
   },
   robots: { index: true, follow: true },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f6f3" },
+    { media: "(prefers-color-scheme: dark)", color: "#101713" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -62,10 +72,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen flex flex-col bg-bg text-text antialiased">
         <ThemeProvider>
+          <a href="#main-content" className="fixed left-3 top-3 z-[200] -translate-y-20 bg-surface px-3 py-2 text-sm text-text shadow-md focus:translate-y-0">
+            跳到正文
+          </a>
           <NoiseTexture />
           <ReadingProgress />
           <Header />
-          <main className="flex-1 pt-14">{children}</main>
+          <main id="main-content" className="flex-1 pt-[var(--header-height)]">{children}</main>
           <Footer />
           <BackToTop />
         </ThemeProvider>

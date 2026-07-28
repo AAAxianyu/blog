@@ -26,11 +26,8 @@ export default function ReadingProgress() {
       }`}
     >
       <div
-        className="h-full transition-[width] duration-150 ease-out"
-        style={{
-          width: `${progress}%`,
-          background: 'linear-gradient(90deg, var(--color-accent), var(--color-accent-hover))',
-        }}
+        className="h-full bg-accent transition-[width] duration-150 ease-out"
+        style={{ width: `${progress}%` }}
       />
     </div>
   );

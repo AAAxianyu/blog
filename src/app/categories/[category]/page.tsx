@@ -1,58 +1,38 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getPostsByCategory, getAllCategories } from '@/lib/posts';
-import PostCard from '@/components/features/PostCard';
+import { getAllCategories, getPostsByCategory } from '@/lib/posts';
+import PostGrid from '@/components/features/PostGrid';
 
-interface Props {
-  params: Promise<{ category: string }>;
+interface Props { params: Promise<{ category: string }>; }
+
+export function generateStaticParams() {
+  return getAllCategories().map((category) => ({ category: category.name }));
 }
 
-export async function generateStaticParams() {
-  const categories = getAllCategories();
-  return categories.map((cat) => ({ category: cat.name }));
-}
-
-export async function generateMetadata({ params }: Props) {
-  const { category } = await params;
-  return {
-    title: `分类：${category}`,
-    description: `"${category}" 分类下的所有文章`,
-  };
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const category = decodeURIComponent((await params).category);
+  return { title: `分类：${category}`, description: `浏览“${category}”分类下的文章。` };
 }
 
 export default async function CategoryPage({ params }: Props) {
-  const { category } = await params;
-  const posts = getPostsByCategory(decodeURIComponent(category));
-
-  if (posts.length === 0) {
-    notFound();
-  }
+  const category = decodeURIComponent((await params).category);
+  const posts = getPostsByCategory(category);
+  if (!posts.length) notFound();
 
   return (
     <div className="animate-fade-in">
-      <div className="border-b border-border">
-        <div className="mx-auto max-w-[var(--max-width-page)] px-4 sm:px-6 lg:px-8 py-16">
-          <Link href="/" className="text-sm text-text-tertiary hover:text-text-secondary transition-colors mb-3 inline-block">
-            &larr; 返回首页
-          </Link>
-          <h1 className="text-3xl sm:text-4xl font-bold text-text tracking-tight mb-2">
-            {category}
-          </h1>
-          <p className="text-text-secondary">
-            共 {posts.length} 篇文章
-          </p>
+      <header className="border-b border-border bg-surface">
+        <div className="mx-auto max-w-[var(--max-width-page)] px-5 py-14 sm:px-6 sm:py-18 lg:px-8">
+          <Link href="/posts" className="text-sm text-secondary hover:text-text">返回全部文章</Link>
+          <p className="section-kicker mb-2 mt-7">Category</p>
+          <h1 className="font-serif text-3xl font-bold text-text sm:text-4xl">{category}</h1>
+          <p className="mt-3 text-text-secondary">{posts.length} 篇文章</p>
         </div>
-      </div>
-
-      <div className="mx-auto max-w-[var(--max-width-page)] px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
-          {posts.map((post) => (
-            <div key={post.slug}>
-              <PostCard post={post} />
-            </div>
-          ))}
-        </div>
-      </div>
+      </header>
+      <section className="mx-auto max-w-[var(--max-width-page)] px-5 py-12 sm:px-6 sm:py-16 lg:px-8">
+        <PostGrid posts={posts} />
+      </section>
     </div>
   );
 }

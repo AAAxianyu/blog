@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Menu, Search, X } from 'lucide-react';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const navLinks = [
   { href: '/', label: '首页' },
   { href: '/posts', label: '文章' },
+  { href: '/archive', label: '归档' },
   { href: '/about', label: '关于' },
 ];
 
@@ -15,81 +17,90 @@ export default function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const overHero = pathname === '/' && !scrolled && !open;
 
   useEffect(() => {
-    const h = () => setScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', h, { passive: true });
-    h();
-    return () => window.removeEventListener('scroll', h);
+    const handleScroll = () => setScrolled(window.scrollY > 16);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => { setOpen(false); }, [pathname]);
-  useEffect(() => { document.body.style.overflow = open ? 'hidden' : ''; return () => { document.body.style.overflow = ''; }; }, [open]);
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
+  const close = () => setOpen(false);
 
   return (
-    <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-400 ${
-      scrolled ? 'bg-bg/80 backdrop-blur-xl border-b border-border/60 shadow-[0_1px_3px_rgba(45,31,15,0.03)]' : ''
+    <header className={`fixed inset-x-0 top-0 z-50 border-b ${
+      overHero
+        ? 'border-transparent bg-transparent text-white'
+        : 'border-border/80 bg-bg/90 text-text shadow-[var(--shadow-sm)] backdrop-blur-xl'
     }`}>
-      <nav className="mx-auto max-w-[var(--max-width-page)] flex items-center justify-between h-14 px-5 sm:px-6 lg:px-8">
-        <Link href="/" className="font-serif text-lg font-bold tracking-tight text-text hover:text-accent transition-colors shrink-0">
+      <nav className="mx-auto flex h-[var(--header-height)] max-w-[var(--max-width-page)] items-center justify-between px-5 sm:px-6 lg:px-8" aria-label="主导航">
+        <Link href="/" onClick={close} className="font-serif text-lg font-bold">
           x1anyu的小屋
         </Link>
 
-        {/* Desktop */}
-        <div className="hidden sm:flex items-center gap-0.5">
-          {navLinks.map((l) => {
-            const active = l.href === '/' ? pathname === '/' : pathname.startsWith(l.href);
+        <div className="hidden items-center gap-1 sm:flex">
+          {navLinks.map((link) => {
+            const active = link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
             return (
-              <Link key={l.href} href={l.href}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all duration-200 ${
-                  active ? 'text-accent bg-accent-soft' : 'text-text-secondary hover:text-text hover:bg-bg-tertiary'
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-[5px] px-3 py-1.5 text-sm font-medium ${
+                  active
+                    ? overHero ? 'bg-white/16 text-white' : 'bg-secondary-soft text-secondary'
+                    : overHero ? 'text-white/78 hover:bg-white/10 hover:text-white' : 'text-text-secondary hover:bg-bg-secondary hover:text-text'
                 }`}
-              >{l.label}</Link>
+              >
+                {link.label}
+              </Link>
             );
           })}
-          <span className="ml-1.5 pl-1.5 border-l border-border">
-            <ThemeToggle />
-          </span>
+          <Link href="/search" aria-label="搜索" title="搜索" className="ml-2 grid h-9 w-9 place-items-center rounded-[5px] hover:bg-bg-tertiary">
+            <Search size={18} />
+          </Link>
+          <ThemeToggle />
         </div>
 
-        {/* Mobile */}
         <div className="flex items-center gap-1 sm:hidden">
           <ThemeToggle />
-          <button onClick={() => setOpen(!open)} aria-label="菜单"
-            className="w-9 h-9 flex items-center justify-center rounded-lg text-text-secondary hover:text-text hover:bg-bg-tertiary transition-colors cursor-pointer">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              {open ? <path d="M4.5 4.5l9 9M13.5 4.5l-9 9" /> : <><path d="M2.5 4.5h13"/><path d="M2.5 9h13"/><path d="M2.5 13.5h13"/></>}
-            </svg>
+          <button
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            aria-label={open ? '关闭菜单' : '打开菜单'}
+            aria-expanded={open}
+            className="grid h-9 w-9 place-items-center rounded-[5px] hover:bg-bg-tertiary"
+          >
+            {open ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </nav>
 
-      {/* Mobile menu */}
-      <div className={`fixed inset-0 top-14 bg-bg z-40 sm:hidden transition-all duration-300 ${
-        open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        <nav className="flex flex-col p-6 gap-1">
-          {navLinks.map((l, i) => {
-            const active = l.href === '/' ? pathname === '/' : pathname.startsWith(l.href);
-            return (
-              <Link key={l.href} href={l.href}
-                className={`py-3 px-4 text-lg font-medium rounded-lg transition-all duration-200 ${
-                  active ? 'text-accent bg-accent-soft' : 'text-text-secondary hover:text-text hover:bg-bg-tertiary'
-                }`}
-                style={{ transitionDelay: open ? `${i * 50}ms` : '0ms', transform: open ? 'translateY(0)' : 'translateY(8px)', opacity: open ? 1 : 0 }}>
-                {l.label}
+      {open && (
+        <div className="h-[calc(100vh-var(--header-height))] border-t border-border bg-bg px-5 py-6 text-text sm:hidden">
+          <nav className="mx-auto flex max-w-md flex-col gap-1" aria-label="移动导航">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={close}
+                className="rounded-[5px] px-3 py-3 text-lg font-medium text-text-secondary hover:bg-bg-secondary hover:text-text"
+              >
+                {link.label}
               </Link>
-            );
-          })}
-          <Link href="/search"
-            className="py-3 px-4 text-lg font-medium rounded-lg transition-all duration-200 text-text-secondary hover:text-text hover:bg-bg-tertiary flex items-center gap-2.5"
-            style={{ transitionDelay: open ? `${navLinks.length * 50}ms` : '0ms', transform: open ? 'translateY(0)' : 'translateY(8px)', opacity: open ? 1 : 0 }}>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            搜索
-          </Link>
-        </nav>
-      </div>
+            ))}
+            <Link href="/search" onClick={close} className="mt-3 flex items-center gap-3 border-t border-border px-3 py-4 text-text-secondary">
+              <Search size={19} />
+              搜索
+            </Link>
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

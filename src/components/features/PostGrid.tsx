@@ -1,35 +1,23 @@
 import PostCard from './PostCard';
-import { PostSummary } from '@/lib/posts';
+import type { PostSummary } from '@/lib/posts';
 
-interface Props {
-  posts: PostSummary[];
-  featured?: boolean;
-}
+export default function PostGrid({ posts, featured = false }: { posts: PostSummary[]; featured?: boolean }) {
+  if (!posts.length) return null;
 
-export default function PostGrid({ posts, featured = false }: Props) {
-  if (posts.length === 0) return null;
+  if (featured && posts.length > 1) {
+    return (
+      <div className="stagger grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1.65fr)_minmax(17rem,0.75fr)]">
+        <PostCard post={posts[0]} variant="featured" />
+        <div className="border-y border-border py-5 lg:border-y-0 lg:border-l lg:py-0 lg:pl-7">
+          {posts.slice(1, 4).map((post) => <PostCard key={post.slug} post={post} variant="compact" />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="stagger">
-      {/* Bento-style: first post gets a larger card */}
-      {featured && posts.length > 1 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6 mb-5 sm:mb-6">
-          <div className="lg:col-span-2">
-            <PostCard post={posts[0]} variant="featured" />
-          </div>
-          <div className="grid grid-cols-1 gap-5 sm:gap-6">
-            {posts.slice(1, 3).map((p) => (
-              <PostCard key={p.slug} post={p} variant="compact" />
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-        {(featured && posts.length > 1 ? posts.slice(3) : posts).map((post) => (
-          <PostCard key={post.slug} post={post} />
-        ))}
-      </div>
+    <div className="stagger grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+      {posts.map((post) => <PostCard key={post.slug} post={post} />)}
     </div>
   );
 }

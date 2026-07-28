@@ -42,14 +42,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
 
   const categoryPages: MetadataRoute.Sitemap = categories.map((cat) => ({
-    url: `${siteUrl}/categories/${cat.name}`,
+    url: `${siteUrl}/categories/${encodeURIComponent(cat.name)}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.6,
   }));
 
   const tagPages: MetadataRoute.Sitemap = tags.map((tag) => ({
-    url: `${siteUrl}/tags/${tag.name}`,
+    url: `${siteUrl}/tags/${encodeURIComponent(tag.name)}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.5,

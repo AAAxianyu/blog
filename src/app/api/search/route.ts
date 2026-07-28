@@ -3,10 +3,10 @@ import { searchPosts } from '@/lib/posts';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get('q') || '';
+  const query = (searchParams.get('q') || '').slice(0, 120);
   const posts = searchPosts(query);
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     posts: posts.slice(0, 10).map((p) => ({
       slug: p.slug,
       title: p.title,
@@ -18,4 +18,6 @@ export async function GET(request: NextRequest) {
     })),
     total: posts.length,
   });
+  response.headers.set('Cache-Control', 'private, max-age=30');
+  return response;
 }
