@@ -11,6 +11,7 @@ EnvironmentFile=/etc/x1anyu-blog.env
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
 RestartSec=5
+SuccessExitStatus=143
 TimeoutStopSec=20
 KillSignal=SIGTERM
 NoNewPrivileges=true
