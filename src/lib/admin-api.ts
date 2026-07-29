@@ -17,6 +17,7 @@ export function requireAdmin(request: NextRequest, mutation = false): NextRespon
 export function revalidateBlogContent(): void {
   revalidatePath('/');
   revalidatePath('/posts');
+  revalidatePath('/archive');
   revalidatePath('/posts/[slug]', 'page');
   revalidatePath('/categories/[category]', 'page');
   revalidatePath('/tags/[tag]', 'page');

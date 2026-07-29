@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { getAdjacentPosts, getAllPosts, getPostBySlug } from '@/lib/posts';
+import { getAdjacentPosts, getPostBySlug } from '@/lib/posts';
 import { markdownToHtml } from '@/lib/markdown';
 import { decodeRouteSegment, formatDate } from '@/lib/utils';
 import TagBadge from '@/components/ui/TagBadge';
@@ -11,9 +11,7 @@ import ArticleActions from '@/components/features/ArticleActions';
 
 interface Props { params: Promise<{ slug: string }>; }
 
-export function generateStaticParams() {
-  return getAllPosts().map((post) => ({ slug: post.slug }));
-}
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = getPostBySlug(decodeRouteSegment((await params).slug));

@@ -3,9 +3,11 @@ import Link from 'next/link';
 import { getAllPosts } from '@/lib/posts';
 import { formatDate } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
-  title: '文章归档',
-  description: '按年份浏览全部文章。',
+  title: '文章时间线',
+  description: '按年份浏览所有已发布文章。',
 };
 
 export default function ArchivePage() {
@@ -17,7 +19,7 @@ export default function ArchivePage() {
       <header className="border-b border-border bg-surface">
         <div className="mx-auto max-w-[var(--max-width-content)] px-5 py-14 sm:px-6 sm:py-18">
           <p className="section-kicker mb-2">Timeline</p>
-          <h1 className="font-serif text-3xl font-bold text-text sm:text-4xl">文章归档</h1>
+          <h1 className="font-serif text-3xl font-bold text-text sm:text-4xl">文章时间线</h1>
           <p className="mt-3 text-text-secondary">沿时间线回看 {posts.length} 篇记录。</p>
         </div>
       </header>

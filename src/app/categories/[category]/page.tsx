@@ -1,14 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getAllCategories, getPostsByCategory } from '@/lib/posts';
+import { getPostsByCategory } from '@/lib/posts';
 import PostGrid from '@/components/features/PostGrid';
 
 interface Props { params: Promise<{ category: string }>; }
 
-export function generateStaticParams() {
-  return getAllCategories().map((category) => ({ category: category.name }));
-}
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const category = decodeURIComponent((await params).category);

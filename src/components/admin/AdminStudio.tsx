@@ -10,12 +10,12 @@ import {
 } from 'react';
 import Link from 'next/link';
 import {
-  Archive,
   Bold,
   Check,
   Code2,
   Columns2,
   Eye,
+  ExternalLink,
   FileText,
   Heading2,
   ImagePlus,
@@ -30,6 +30,7 @@ import {
   Save,
   Search,
   Send,
+  Trash2,
   X,
 } from 'lucide-react';
 import { slugify } from '@/lib/utils';
@@ -327,16 +328,16 @@ function WritingStudio({ onSignedOut }: { onSignedOut: () => void }) {
   };
 
   const archivePost = async () => {
-    if (!originalSlug || !window.confirm(`归档《${post.title}》？文章可在服务器回收目录恢复。`)) return;
+    if (!originalSlug || !window.confirm(`将《${post.title}》移入回收站？文章可从服务器回收目录恢复。`)) return;
     setSaving(true);
     try {
       await api(`/api/admin/posts/${encodeURIComponent(originalSlug)}`, { method: 'DELETE' });
       localStorage.removeItem(`x1anyu-editor-${originalSlug}`);
       createPost();
-      setNotice('文章已归档');
+      setNotice('文章已移入回收站');
       await loadPosts();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : '归档失败');
+      setError(caught instanceof Error ? caught.message : '移入回收站失败');
     } finally {
       setSaving(false);
     }
@@ -418,8 +419,14 @@ function WritingStudio({ onSignedOut }: { onSignedOut: () => void }) {
           ))}
         </div>
         <div className="mt-auto flex items-center justify-between border-t border-border p-3">
-          <Link href="/" className="admin-secondary text-xs">
-            <Eye size={15} />
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="在新标签页打开"
+            className="admin-secondary text-xs"
+          >
+            <ExternalLink size={15} />
             查看博客
           </Link>
           <button
@@ -449,8 +456,8 @@ function WritingStudio({ onSignedOut }: { onSignedOut: () => void }) {
           </div>
           <div className="flex items-center gap-2">
             {originalSlug && (
-              <button type="button" className="admin-icon text-danger" title="归档文章" onClick={() => void archivePost()}>
-                <Archive size={16} />
+              <button type="button" className="admin-icon text-danger" title="移入回收站" onClick={() => void archivePost()}>
+                <Trash2 size={16} />
               </button>
             )}
             <button type="button" className="admin-secondary" disabled={saving} onClick={() => void savePost()}>

@@ -4,6 +4,8 @@ import { getAllCategories, getAllPosts, getAllTags } from '@/lib/posts';
 import PostGrid from '@/components/features/PostGrid';
 import SearchBar from '@/components/features/SearchBar';
 
+export const dynamic = 'force-dynamic';
+
 export default function HomePage() {
   const posts = getAllPosts();
   const categories = getAllCategories();
@@ -89,7 +91,7 @@ export default function HomePage() {
                 ))}
               </div>
               <Link href="/archive" className="mt-8 inline-flex items-center gap-1 text-sm font-semibold text-secondary hover:text-text">
-                浏览时间归档 <ArrowRight size={16} />
+                浏览文章时间线 <ArrowRight size={16} />
               </Link>
             </div>
           </div>

@@ -1,14 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getAllTags, getPostsByTag } from '@/lib/posts';
+import { getPostsByTag } from '@/lib/posts';
 import PostGrid from '@/components/features/PostGrid';
 
 interface Props { params: Promise<{ tag: string }>; }
 
-export function generateStaticParams() {
-  return getAllTags().map((tag) => ({ tag: tag.name }));
-}
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const tag = decodeURIComponent((await params).tag);

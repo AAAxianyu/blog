@@ -4,6 +4,8 @@ import { getAllCategories, getAllPosts } from '@/lib/posts';
 import PostGrid from '@/components/features/PostGrid';
 import SearchBar from '@/components/features/SearchBar';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: '全部文章',
   description: '浏览 x1anyu 的全部技术文章、随笔与生活记录。',

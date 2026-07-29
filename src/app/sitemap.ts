@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { getAllPosts, getAllCategories, getAllTags } from '@/lib/posts';
 
+export const dynamic = 'force-dynamic';
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = process.env.SITE_URL || 'https://x1anyu.top';
   const posts = getAllPosts();
