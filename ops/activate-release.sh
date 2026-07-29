@@ -11,6 +11,7 @@ archive="/tmp/blog-${release_id}.tgz"
 app_root="/srv/x1anyu-blog"
 release_dir="${app_root}/releases/${release_id}"
 data_root="/var/lib/x1anyu-blog"
+content_marker="${data_root}/.content-initialized"
 previous_target=""
 legacy_pm2_active=false
 legacy_pm2_removed=false
@@ -59,9 +60,13 @@ rm -rf "$release_dir"
 install -d -o root -g root -m 755 "$release_dir"
 tar -xzf "$archive" -C "$release_dir"
 
-if ! find "${data_root}/posts" -maxdepth 1 -type f \( -name '*.md' -o -name '*.mdx' \) | grep -q .; then
-  cp -a "${release_dir}/seed-posts/." "${data_root}/posts/"
-  chown -R blog:blog "${data_root}/posts"
+if [ ! -e "$content_marker" ]; then
+  if ! find "${data_root}/posts" "${data_root}/trash" -maxdepth 1 -type f \
+    \( -name '*.md' -o -name '*.mdx' \) | grep -q .; then
+    cp -a "${release_dir}/seed-posts/." "${data_root}/posts/"
+    chown -R blog:blog "${data_root}/posts"
+  fi
+  install -o root -g root -m 644 /dev/null "$content_marker"
 fi
 
 if [ ! -f /etc/x1anyu-blog.env ]; then
