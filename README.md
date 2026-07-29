@@ -7,7 +7,8 @@
 - 首页、文章列表、归档、分类、标签和全文搜索
 - Markdown / GFM、代码高亮、标题锚点和安全 HTML 清理
 - RSS、sitemap、robots.txt 和文章分享
-- `/admin` 写作后台：草稿、发布、编辑、归档、实时预览和图片上传
+- 无需登录的文章评论、宽松敏感词过滤和匿名接口限流
+- `/admin` 写作后台：草稿、发布、编辑、归档、实时预览、图片上传和评论管理
 - 明暗主题和响应式布局
 - GitHub Actions 自动测试、构建、发布、健康检查和失败回滚
 
@@ -90,6 +91,7 @@ gh run watch --repo AAAxianyu/blog
 - 文章：`/var/lib/x1anyu-blog/posts`
 - 上传：`/var/lib/x1anyu-blog/uploads`
 - 可恢复归档：`/var/lib/x1anyu-blog/trash`
+- 评论：`/var/lib/x1anyu-blog/comments`
 - 环境变量：`/etc/x1anyu-blog.env`
 - 服务：`x1anyu-blog.service`
 

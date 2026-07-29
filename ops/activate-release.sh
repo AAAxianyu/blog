@@ -53,7 +53,8 @@ fi
 
 id -u blog >/dev/null 2>&1 || useradd --system --home-dir "$app_root" --shell /usr/sbin/nologin blog
 install -d -o root -g root -m 755 "${app_root}/releases"
-install -d -o blog -g blog -m 750 "${data_root}/posts" "${data_root}/uploads" "${data_root}/trash"
+install -d -o blog -g blog -m 750 \
+  "${data_root}/posts" "${data_root}/uploads" "${data_root}/trash" "${data_root}/comments"
 install -d -o root -g root -m 755 /var/www/html/.well-known/acme-challenge
 
 rm -rf "$release_dir"
@@ -80,11 +81,15 @@ if [ ! -f /etc/x1anyu-blog.env ]; then
     printf 'BLOG_CONTENT_DIR=%s/posts\n' "$data_root"
     printf 'BLOG_UPLOAD_DIR=%s/uploads\n' "$data_root"
     printf 'BLOG_TRASH_DIR=%s/trash\n' "$data_root"
+    printf 'BLOG_COMMENTS_DIR=%s/comments\n' "$data_root"
     printf 'ADMIN_PASSWORD=%s\n' "$(openssl rand -base64 18)"
     printf 'SESSION_SECRET=%s\n' "$(openssl rand -hex 32)"
   } > /etc/x1anyu-blog.env
 else
   set_deployment_version "$release_id"
+  if ! grep -q '^BLOG_COMMENTS_DIR=' /etc/x1anyu-blog.env; then
+    printf 'BLOG_COMMENTS_DIR=%s/comments\n' "$data_root" >> /etc/x1anyu-blog.env
+  fi
 fi
 
 cp "${release_dir}/ops/x1anyu-blog.service" /etc/systemd/system/x1anyu-blog.service

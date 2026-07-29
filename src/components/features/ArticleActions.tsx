@@ -1,14 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Link2, MessagesSquare, Share2 } from 'lucide-react';
+import { Check, Link2, Share2 } from 'lucide-react';
 
 export default function ArticleActions({ title, url }: { title: string; url: string }) {
   const [copied, setCopied] = useState(false);
-  const issueUrl = `https://github.com/AAAxianyu/blog/issues/new?${new URLSearchParams({
-    title: `关于文章：${title}`,
-    body: `文章链接：${url}\n\n`,
-  }).toString()}`;
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(url);
@@ -34,10 +30,6 @@ export default function ArticleActions({ title, url }: { title: string; url: str
         <Share2 size={15} />
         分享
       </button>
-      <a href={issueUrl} target="_blank" rel="noreferrer" className="admin-secondary">
-        <MessagesSquare size={15} />
-        参与讨论
-      </a>
     </div>
   );
 }

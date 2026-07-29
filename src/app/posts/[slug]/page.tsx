@@ -8,6 +8,8 @@ import { decodeRouteSegment, formatDate } from '@/lib/utils';
 import TagBadge from '@/components/ui/TagBadge';
 import Sidebar from '@/components/layout/Sidebar';
 import ArticleActions from '@/components/features/ArticleActions';
+import Comments from '@/components/features/Comments';
+import { listComments } from '@/lib/comments';
 
 interface Props { params: Promise<{ slug: string }>; }
 
@@ -46,6 +48,7 @@ export default async function PostPage({ params }: Props) {
 
   const html = await markdownToHtml(post.content);
   const { prev, next } = getAdjacentPosts(slug);
+  const comments = listComments(slug);
   const siteUrl = process.env.SITE_URL || 'https://x1anyu.top';
   const canonicalUrl = `${siteUrl}/posts/${encodeURIComponent(post.slug)}`;
   const jsonLd = {
@@ -130,6 +133,8 @@ export default async function PostPage({ params }: Props) {
                 </Link>
               )}
             </nav>
+
+            <Comments slug={post.slug} initialComments={comments} />
           </div>
           <aside className="hidden w-52 shrink-0 lg:block">
             <div className="sticky top-24"><Sidebar /></div>

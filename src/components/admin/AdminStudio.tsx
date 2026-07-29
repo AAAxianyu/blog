@@ -24,6 +24,7 @@ import {
   List,
   LoaderCircle,
   LogOut,
+  MessageSquare,
   MonitorUp,
   Plus,
   Quote,
@@ -419,6 +420,9 @@ function WritingStudio({ onSignedOut }: { onSignedOut: () => void }) {
           ))}
         </div>
         <div className="mt-auto flex items-center justify-between border-t border-border p-3">
+          <Link href="/admin/comments" className="admin-icon" title="管理评论" aria-label="管理评论">
+            <MessageSquare size={16} />
+          </Link>
           <Link
             href="/"
             target="_blank"
